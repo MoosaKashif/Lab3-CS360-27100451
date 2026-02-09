@@ -1,138 +1,97 @@
-package com.example.listycity;  // Change to YOUR package name
+package com.example.listycity;
 
-import android.app.AlertDialog;
-import android.graphics.Color;
+import androidx.appcompat.app.AppCompatActivity;
+
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
-import androidx.appcompat.app.AppCompatActivity;
+
 import java.util.ArrayList;
-import java.util.Arrays;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AddCityFragment.OnFragmentInteractionListener {
 
-    // Declare references
     ListView cityList;
-    ArrayAdapter<String> cityAdapter;
-    ArrayList<String> dataList;
+    ArrayAdapter<City> cityAdapter;
+    ArrayList<City> dataList;
     Button addCityButton;
     Button deleteCityButton;
-    int selectedPosition = -1;  // Track selected city position
+    City selectedCity;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Find references
+        // Initialize views
         cityList = findViewById(R.id.city_list);
         addCityButton = findViewById(R.id.add_city_button);
         deleteCityButton = findViewById(R.id.delete_city_button);
 
-        // Create string array of cities
-        String[] cities = {"Edmonton", "Vancouver", "Toronto", "Calgary",
-                "Montreal", "Ottawa", "Winnipeg", "Quebec City"};
+        // Create sample cities
+        String[] cities = {"Edmonton", "Vancouver", "Toronto", "Calgary", "Montreal", "Ottawa", "Winnipeg", "Quebec City"};
+        String[] provinces = {"Alberta", "British Columbia", "Ontario", "Alberta", "Quebec", "Ontario", "Manitoba", "Quebec"};
 
-        // Create ArrayList and add data
         dataList = new ArrayList<>();
-        dataList.addAll(Arrays.asList(cities));
+        for (int i = 0; i < cities.length; i++) {
+            dataList.add(new City(cities[i], provinces[i]));
+        }
 
-        // Create ArrayAdapter
-        cityAdapter = new ArrayAdapter<>(this, R.layout.content,
-                R.id.city_text, dataList);
-
-        // Set adapter to ListView
+        // Set up custom adapter
+        cityAdapter = new CustomList(this, dataList);
         cityList.setAdapter(cityAdapter);
 
-        // Set up click listener for selecting a city
-        cityList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // Update selected position
-                selectedPosition = position;
-
-                // Highlight selected item
-                for (int i = 0; i < parent.getChildCount(); i++) {
-                    parent.getChildAt(i).setBackgroundColor(Color.TRANSPARENT);
-                }
-                view.setBackgroundColor(Color.LTGRAY);
-
-                Toast.makeText(MainActivity.this,
-                        "Selected: " + dataList.get(position),
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        // Add City Button Click Listener
+        // Add city button - opens dialog to add new city
         addCityButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                showAddCityDialog();
+            public void onClick(View view) {
+                new AddCityFragment().show(getSupportFragmentManager(), "ADD_CITY");
             }
         });
 
-        // Delete City Button Click Listener
+        // Delete city button - deletes selected city
         deleteCityButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
-                deleteSelectedCity();
+            public void onClick(View view) {
+                if (selectedCity != null) {
+                    dataList.remove(selectedCity);
+                    cityAdapter.notifyDataSetChanged();
+                    selectedCity = null;
+                }
+            }
+        });
+
+        // Click listener for selecting a city
+        cityList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
+                selectedCity = dataList.get(position);
+            }
+        });
+
+        // Long click listener for EDITING a city (LAB 3 REQUIREMENT)
+        cityList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
+                City cityToEdit = dataList.get(position);
+                AddCityFragment fragment = AddCityFragment.newInstance(cityToEdit);
+                fragment.show(getSupportFragmentManager(), "EDIT_CITY");
+                return true;
             }
         });
     }
 
-    // Method to show dialog for adding a city
-    private void showAddCityDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Add City");
-
-        // Create EditText for user input
-        final EditText input = new EditText(this);
-        input.setHint("Enter city name");
-        builder.setView(input);
-
-        // Set up the buttons
-        builder.setPositiveButton("CONFIRM", (dialog, which) -> {
-            String cityName = input.getText().toString().trim();
-            if (!cityName.isEmpty()) {
-                dataList.add(cityName);
-                cityAdapter.notifyDataSetChanged();
-                Toast.makeText(MainActivity.this,
-                        cityName + " added!",
-                        Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(MainActivity.this,
-                        "Please enter a city name",
-                        Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        builder.setNegativeButton("CANCEL", (dialog, which) -> dialog.cancel());
-
-        builder.show();
-    }
-
-    // Method to delete selected city
-    private void deleteSelectedCity() {
-        if (selectedPosition != -1 && selectedPosition < dataList.size()) {
-            String cityName = dataList.get(selectedPosition);
-            dataList.remove(selectedPosition);
-            cityAdapter.notifyDataSetChanged();
-
-            Toast.makeText(this,
-                    cityName + " deleted!",
-                    Toast.LENGTH_SHORT).show();
-
-            selectedPosition = -1;  // Reset selection
-        } else {
-            Toast.makeText(this,
-                    "Please select a city first",
-                    Toast.LENGTH_SHORT).show();
+    @Override
+    public void onOkPressed(City city) {
+        // Check if city already exists in list (editing case)
+        if (!dataList.contains(city)) {
+            // New city - add it
+            dataList.add(city);
         }
+        // If editing, the city object was already modified in the fragment
+        cityAdapter.notifyDataSetChanged();
     }
 }
-//Citation:https://claude.ai/share/b7631409-5059-4896-b237-c8677e8e8034
+//Citation: https://claude.ai/share/882c31a9-6194-428b-a800-36599f6b586a
