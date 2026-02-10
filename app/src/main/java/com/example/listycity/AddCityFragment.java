@@ -3,7 +3,6 @@ package com.example.listycity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,20 +14,18 @@ import androidx.fragment.app.DialogFragment;
 
 public class AddCityFragment extends DialogFragment {
 
-    private EditText cityEditText;
-    private EditText provinceEditText;
-    private OnFragmentInteractionListener listener;
-    private City cityToEdit;
-
-    public interface OnFragmentInteractionListener {
-        void onOkPressed(City city);
+    interface AddCityDialogListener {
+        void addCity(City city);
     }
+
+    private AddCityDialogListener listener;
+    private City cityToEdit;
 
     // Empty constructor for adding new city
     public AddCityFragment() {
     }
 
-    // Method to create fragment for editing (preferred Android way)
+    // Lab 3: Method to create fragment for editing (preferred Android way)
     public static AddCityFragment newInstance(City city) {
         AddCityFragment fragment = new AddCityFragment();
         Bundle args = new Bundle();
@@ -40,57 +37,54 @@ public class AddCityFragment extends DialogFragment {
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        if (context instanceof OnFragmentInteractionListener) {
-            listener = (OnFragmentInteractionListener) context;
+        if (context instanceof AddCityDialogListener) {
+            listener = (AddCityDialogListener) context;
         } else {
-            throw new RuntimeException(context.toString()
-                    + " must implement OnFragmentInteractionListener");
+            throw new RuntimeException(context + " must implement AddCityDialogListener");
         }
     }
 
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
-        View view = LayoutInflater.from(getActivity()).inflate(R.layout.add_city_fragment, null);
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.fragment_add_city, null);
 
-        cityEditText = view.findViewById(R.id.city_edittext);
-        provinceEditText = view.findViewById(R.id.province_edittext);
+        EditText editCityName = view.findViewById(R.id.edit_text_city_text);
+        EditText editProvinceName = view.findViewById(R.id.edit_text_province_text);
 
-        // Check if we're editing an existing city
+        // Lab 3: Check if we're editing an existing city
         Bundle args = getArguments();
         if (args != null) {
             cityToEdit = (City) args.getSerializable("CITY_KEY");
             if (cityToEdit != null) {
                 // Pre-fill the fields with existing data
-                cityEditText.setText(cityToEdit.getCityName());
-                provinceEditText.setText(cityToEdit.getProvinceName());
+                editCityName.setText(cityToEdit.getName());
+                editProvinceName.setText(cityToEdit.getProvince());
             }
         }
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-        String title = (cityToEdit != null) ? "Edit City" : "Add City";
+        String title = (cityToEdit != null) ? "Edit City" : "Add a city";
+        String positiveButtonText = (cityToEdit != null) ? "Save" : "Add";
 
         return builder
                 .setView(view)
                 .setTitle(title)
                 .setNegativeButton("Cancel", null)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialogInterface, int i) {
-                        String cityName = cityEditText.getText().toString();
-                        String provinceName = provinceEditText.getText().toString();
+                .setPositiveButton(positiveButtonText, (dialog, which) -> {
+                    String cityName = editCityName.getText().toString();
+                    String provinceName = editProvinceName.getText().toString();
 
-                        if (cityToEdit != null) {
-                            // Editing existing city
-                            cityToEdit.setCityName(cityName);
-                            cityToEdit.setProvinceName(provinceName);
-                            listener.onOkPressed(cityToEdit);
-                        } else {
-                            // Adding new city
-                            City newCity = new City(cityName, provinceName);
-                            listener.onOkPressed(newCity);
-                        }
+                    if (cityToEdit != null) {
+                        // Lab 3: Editing existing city
+                        cityToEdit.setName(cityName);
+                        cityToEdit.setProvince(provinceName);
+                        listener.addCity(cityToEdit);
+                    } else {
+                        // Adding new city
+                        listener.addCity(new City(cityName, provinceName));
                     }
-                }).create();
+                })
+                .create();
     }
 }

@@ -12,27 +12,24 @@ import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 
-public class CustomList extends ArrayAdapter<City> {
+public class CityArrayAdapter extends ArrayAdapter<City> {
 
-    private ArrayList<City> cities;
-    private Context context;
-
-    public CustomList(Context context, ArrayList<City> cities) {
+    public CityArrayAdapter(Context context, ArrayList<City> cities) {
         super(context, 0, cities);
-        this.cities = cities;
-        this.context = context;
     }
 
     @NonNull
     @Override
     public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-        View view = convertView;
+        View view;
 
-        if (view == null) {
-            view = LayoutInflater.from(context).inflate(R.layout.content, parent, false);
+        if (convertView == null) {
+            view = LayoutInflater.from(getContext()).inflate(R.layout.content, parent, false);
+        } else {
+            view = convertView;
         }
 
-        City city = cities.get(position);
+        City city = getItem(position);
 
         TextView cityName = view.findViewById(R.id.city_text);
         TextView provinceName = view.findViewById(R.id.province_text);

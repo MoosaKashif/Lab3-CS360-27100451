@@ -3,28 +3,28 @@ package com.example.listycity;
 import java.io.Serializable;
 
 public class City implements Serializable {
-    private String cityName;
-    private String provinceName;
+    private String name;
+    private String province;
 
-    public City(String cityName, String provinceName) {
-        this.cityName = cityName;
-        this.provinceName = provinceName;
+    public City(String name, String province) {
+        this.name = name;
+        this.province = province;
     }
 
-    public String getCityName() {
-        return cityName;
+    public String getName() {
+        return name;
     }
 
-    public String getProvinceName() {
-        return provinceName;
+    public String getProvince() {
+        return province;
     }
 
-    // Setters needed for Lab 3 editing functionality
-    public void setCityName(String cityName) {
-        this.cityName = cityName;
+    // Lab 3: Setters for editing functionality
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public void setProvinceName(String provinceName) {
-        this.provinceName = provinceName;
+    public void setProvince(String province) {
+        this.province = province;
     }
 }
